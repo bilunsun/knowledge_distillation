@@ -7,4 +7,4 @@ def get_mnist_train_test(batch_size=64):
 
     train_dataset, test_dataset = random_split(mnist_dataset, [55_000, 5_000])
 
-    return DataLoader(mnist_dataset, batch_size), DataLoader(mnist_dataset, batch_size)
+    return DataLoader(train_dataset, batch_size), DataLoader(test_dataset, batch_size)
