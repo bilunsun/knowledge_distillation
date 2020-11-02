@@ -44,8 +44,8 @@ class StudentNet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.fc1 = nn.Linear(28 * 28, 128)
-        self.fc2 = nn.Linear(128, 10)
+        self.fc1 = nn.Linear(28 * 28, 16)
+        self.fc2 = nn.Linear(16, 10)
 
     def forward(self, x):
         x = x.view(x.size(0), -1)
@@ -56,14 +56,10 @@ class StudentNet(nn.Module):
         return x
 
 
-def kd_loss(student_logits, teacher_logits, y, T, alpha):
+def kd_loss(student_logits, teacher_logits, T):
     soft_targs = F.softmax(teacher_logits / T, dim=1).detach()
     soft_preds = F.log_softmax(student_logits / T, dim=1)
 
-    # distillation_loss = -(soft_targs * soft_preds).sum(dim=1).mean()
-    soft_loss = F.kl_div(soft_preds, soft_targs, reduction="batchmean") * T**2
-    hard_loss = F.cross_entropy(student_logits, y)
-
-    distillation_loss = alpha * soft_loss + (1 - alpha) * hard_loss
+    distillation_loss = F.kl_div(soft_preds, soft_targs, reduction="batchmean") * T**2
 
     return distillation_loss

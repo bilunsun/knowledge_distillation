@@ -57,7 +57,7 @@ def main(who):
     net = StudentNet() if who == "student" else TeacherNet()
 
     model = Model(net)
-    trainer = pl.Trainer(max_epochs=3, gpus=1)
+    trainer = pl.Trainer(max_epochs=1, gpus=1)
     trainer.fit(model, train_loader, test_loader)
 
     torch.save(model.net.state_dict(), MODELS_PATH + f"{who}.pth")

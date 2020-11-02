@@ -13,7 +13,7 @@ from neural_network_utils import StudentNet, TeacherNet, kd_loss
 
 
 class KnowledgeDistillation(pl.LightningModule):
-    def __init__(self, student, teacher, train_loader, test_loader, T=1, alpha=1):
+    def __init__(self, student, teacher, train_loader, test_loader, T=3, alpha=1):
         super().__init__()
 
         self.teacher = teacher
@@ -33,25 +33,32 @@ class KnowledgeDistillation(pl.LightningModule):
         x, y = batch
 
         student_logits, teacher_logits = self(x)
-        loss = kd_loss(student_logits, teacher_logits, y, self.T, self.alpha)
+        loss = kd_loss(student_logits, teacher_logits, self.T)
+
+        self.log("student_train_loss", loss)
 
         return loss
     
     def validation_step(self, batch, batch_index):
         x, y = batch
-        student_logits, _ = self(x)
-        loss = F.cross_entropy(student_logits, y)
+        student_logits, teacher_logits = self(x)
 
-        preds = torch.argmax(student_logits, dim=1)
-        acc = accuracy(preds, y)
+        student_loss = F.cross_entropy(student_logits, y)
+        teacher_loss = F.cross_entropy(teacher_logits, y)
 
-        self.log("val_loss", loss, prog_bar=True)
-        self.log("val_acc", acc, prog_bar=True)
+        student_preds = torch.argmax(student_logits, dim=1)
+        student_acc = accuracy(student_preds, y)
+        teacher_preds = torch.argmax(teacher_logits, dim=1)
+        teacher_acc = accuracy(teacher_preds, y)
 
-        return loss
+        self.log("student_val_loss", student_loss, prog_bar=True)
+        self.log("student_val_acc", student_acc, prog_bar=True)
+        self.log("teacher_val_acc", teacher_acc, prog_bar=True)  # Make sure the teacher is properly trained and loaded
+
+        return student_loss
 
     def configure_optimizers(self):
-        return optim.Adam(self.student.parameters(), lr=1e-3)
+        return optim.Adam(self.student.parameters(), lr=0.01)
     
     def train_dataloader(self):
         return self.train_loader
