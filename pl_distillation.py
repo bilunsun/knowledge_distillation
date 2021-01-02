@@ -30,7 +30,7 @@ class KnowledgeDistillation(pl.LightningModule):
         return student_logits, teacher_logits
 
     def training_step(self, batch, batch_index):
-        x, y = batch
+        x, _ = batch
 
         student_logits, teacher_logits = self(x)
         loss = kd_loss(student_logits, teacher_logits, self.T)
@@ -44,7 +44,6 @@ class KnowledgeDistillation(pl.LightningModule):
         student_logits, teacher_logits = self(x)
 
         student_loss = F.cross_entropy(student_logits, y)
-        teacher_loss = F.cross_entropy(teacher_logits, y)
 
         student_preds = torch.argmax(student_logits, dim=1)
         student_acc = accuracy(student_preds, y)
